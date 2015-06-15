@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>emberjs - from 0.9.8 to 1.12</title>
+
+		<meta name="description" content="Triangle Ember - 06/14/2015 - Lessons learned from Ember 0.9.8 to Ember 1.12">
+		<meta name="author" content="Chris Hemp (@hemp)">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/league.css" id="theme">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h1>ember</h1>
+					<h3>Lessons learned from ember 0.9.8 to 1.12&nbsp;&nbsp;&nbsp;&nbsp;<small>window global<br/>EAK<br/>ember-cli<br/>ember-data<br/>. . .</small></h3>
+					<p>
+						<small><a href="http://chrishemp.com">chris hemp</a> / <a href="http://twitter.com/hemp">@hemp</a></small>
+					</p>
+				</section>
+
+				<section>
+					<h2>PureCloud Collaborate <small>aka<br/>Directory<br/>OrgSpan Connect</small></h2>
+					<p>Chat, Video, Phone Controls, Profiles, ...</p>
+				</section>
+
+				<section>
+					<h2>semver and 6 week cadence</h2>
+					<p>git-flow</p>
+					<p></p>
+					<aside class="notes">
+						<p>we were on the 0.9.x release for over a year and then 1.0 came out.</p>
+						<p>ember components, services, inspector, ...</p>
+						<p>PRs are reviewed and the team pushes to newer Ember way ASAP.</p>
+					</aside>
+				</section>
+
+				<section>
+					<h2>ember-cli<small>Ember App Kit</small></h2>
+					<aside class="notes">
+						<p>0.9.8 app was global based</p>
+						<p>1.0 was not and moved to import based</p>
+					</aside>
+				</section>
+
+				<section>
+					<h2>Controllers to Services</h2>
+					<p>initializers and injections</p>
+					<aside class="notes">
+						<p>do you have an authenticated session?</p>
+						<p>are you in a chat?</p>
+						<p>are you in a phone call?</p>
+					</aside>
+				</section>
+
+				<section>
+					<h2>Outlets vs alternatives</h2>
+					<p>certain items are always available (left sidebar) - like chat</p>
+					<p>tearing down DOM</p>
+					<p>outlets are like ember-wormhole before ember-wormhole</p>
+					<aside class="notes">
+					</aside>
+				</section>
+
+				<section>
+					<h2>ember.run.*</h2>
+					<p><a href="http://emberjs.com/api/classes/Ember.run.html">docs</a></p>
+				</section>
+
+				<section>
+					<h2>observers are synchronous</h2>
+					<p><a href="http://guides.emberjs.com/v1.12.0/object-model/observers/">docs</a></p>
+					<aside class="notes">
+						<p>review Ember.run.once example</p>
+					</aside>
+				</section>
+
+				<section>
+					<h2>ember.computed.*</h2>
+					<p><a href="http://emberjs.com/api/classes/Ember.computed.html">docs</a></p>
+				</section>
+
+				<section>
+					<h2>listeners and external widgets</h2>
+					<ul>
+						<li>didInsertElement, willDestroyElement</li>
+					</ul>
+					<p>implement destroy and also verify it does what it says it does</p>
+					<p>lingering document, window listeners?</p>
+					<pre><code data-trim class="javascript">Ember.run.scheduleOnce('afterRender', this, () => {})
+
+let ns = `.${this.get('elementId')}`;
+Ember.$(window).on(`resize.${ns}`, () => {}); Ember.$(window).off(ns);</code></pre>
+					<aside class="notes">
+						<p>be careful of computed/observers recreating tooltips, etc.</p>
+					</aside>
+				</section>
+
+				<section>
+					<h2>DS.RESTADAPTER.coalesceFindRequests</h2>
+					<p><a href="http://emberjs.com/api/data/classes/DS.RESTAdapter.html#property_coalesceFindRequests">coalesceFindRequests</a></p>
+				</section>
+
+				<section>
+					<section>
+						<h2>chat - large lists</h2>
+						<p>switching chat rooms was slow (1 second or more)</p>
+						<p>last September - leveraged coffeescript and string concatenation to reduce that to sub 50ms</p>
+						<p>breaks with glimmer</p>
+						<aside class="notes">
+							<p>glimmer is slow on initial render</p>
+							<p>glimmer fixes RERENDER right now</p>
+						</aside>
+					</section>
+					<section>
+						<p>discourse did something similar but with a handlerbars helper that allowed plain handlerbars string generation</p>
+						<ul>
+							<li><a href="https://github.com/discourse/discourse/commit/f5379cee89d3c45fd358133abe3919e61d597cd6">sha1</a></li>
+							<li><a href="https://github.com/discourse/discourse/commit/09f6011bbd1821b381f1e8391b6ce93c1c4541a4">sha1</a></li>
+							<li><a href="https://github.com/discourse/discourse/commit/adb870a9093826b33afad8c00da098a562ff0547">sha1</a></li>
+						</ul>
+					</section>
+					<section>
+						<p>eric lifka's test <a href="https://ericlifka.github.io/recursive-vs-each">repo</a></p>
+					</section>
+				</section>
+
+				<section>
+					<h2>lodash.debounce vs Ember.run.debounce</h2>
+					<p>_.debounce is on the prototype - applies to all instances</p>
+					<pre><code data-trim class="javascript">export var lodash = Ember.Object.extend({
+    playSound: _.debounce(() => {
+        this._playSound();
+    }, 1000),
+    _playSound: () => {}
+});
+export var ember = Ember.Object.extend({
+    playSound: () => {
+        Ember.run.debounce(this, this._playSound, 1000)
+    },
+    _playSound: () => {}
+});</code></pre>
+				</section>
+
+				<section>
+					<section>
+						<h2>websocket event streams</h2>
+						<p>Queue up objects necessary for render</p>
+						<p>Immediately return a promise for those objects</p>
+						<p>Drain and bulk load 'afterRender'</p>
+						<aside class="notes">
+
+						</aside>
+					</section>
+					<section>
+						<pre><code data-trim contenteditable>BatchDataRequestsMixin = Ember.Mixin.create
+    peopleQueue: {
+        'id-1': [promise, promise, ...]
+        '...': [promises]
+    }
+
+    getPerson: (id) -> new Ember.RSVP.Promise (resolve) =>
+        cachedModel = @store.getById 'person', id
+        if cachedModel
+            resolve cachedModel
+        else
+            queue = @get 'peopleQueue'
+            queue[id] ?= []
+            queue[id].push resolve
+            @scheduleQueues()
+
+    scheduleQueues: _.debounce ->
+        Ember.run.scheduleOnce 'afterRender', @, ->
+            people = @clearQueue 'peopleQueue'
+
+            if not _.isEmpty(people)
+                @processQueue 'person', people
+    , 500,
+        maxWait: 5000</code></pre>
+						<aside class="notes">
+							<p>many promises for one object is OK --> all those promises have their own .then() handler.</p>
+							<p>allows ember to render what it knows.</p>
+							<p>can do this for any object type with different time window schedules/requirements.</p>
+						</aside>
+					</section>
+				</section>
+
+				<section>
+					<h2>payload size</h2>
+					<p>do you need all of your model now?</p>
+				</section>
+
+				<section>
+					<h2>analytics</h2>
+					<pre><code class="javascript">Router.reopen({
+    notifyGoogleAnalytics: function() {
+        var a = this.container.lookup('service:analytics');
+        a.pageView(this.get('url'));
+    }.on('didTransition')
+});
+
+analytics = container.lookup 'service:analytics'
+Ember.ActionHandler.reopen({
+    send: function(actionName) {
+        var args;
+        args = [].slice.call(arguments, 1);
+        record.apply(this, [analytics, actionName].concat(args));
+        return this._super.apply(this, [actionName].concat(args));
+    }
+});</code></pre>
+				</section>
+
+				<section>
+					<h2>Ember at ININ and PureCloud</h2>
+					<p>Collaborate</p>
+					<p>Sign-up</p>
+					<p>Document Viewer</p>
+					<p>OAuth (in progress)</p>
+				</section>
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
