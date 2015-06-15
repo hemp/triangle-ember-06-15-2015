@@ -227,7 +227,7 @@ export var ember = Ember.Object.extend({
     }.on('didTransition')
 });
 
-analytics = container.lookup 'service:analytics'
+analytics = container.lookup('service:analytics');
 Ember.ActionHandler.reopen({
     send: function(actionName) {
         var args;
