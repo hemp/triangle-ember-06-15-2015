@@ -179,7 +179,7 @@ export var ember = Ember.Object.extend({
             people = @clearQueue 'peopleQueue'
 
             if not _.isEmpty(people)
-                @processQueue 'person', people
+                @processQueue 'person', people // -> store.findMany();
     , 500,
         maxWait: 5000</code></pre>
 						<aside class="notes">
@@ -197,6 +197,7 @@ export var ember = Ember.Object.extend({
 
 				<section>
 					<h2>analytics</h2>
+					<p><a href="https://github.com/emberjs/ember.js/issues/10742">_debugContainerKey</a></p>
 					<pre><code class="javascript">Router.reopen({
     notifyGoogleAnalytics: function() {
         var a = this.container.lookup('service:analytics');
@@ -204,7 +205,18 @@ export var ember = Ember.Object.extend({
     }.on('didTransition')
 });
 
-analytics = container.lookup('service:analytics');
+var analytics = container.lookup('service:analytics');
+var record = function(analytics, actionName) {
+    var args, containerKey, label;
+    args = [].slice.call(arguments, 1);
+    containerKey = this._debugContainerKey;//Private but so handy!
+
+	label = void 0;
+	if ((args != null ? args.length : void 0) > 0) {
+		label = args.join(', ');
+	}
+    analytics.track(containerKey, actionName, label);
+};
 Ember.ActionHandler.reopen({
     send: function(actionName) {
         var args;
